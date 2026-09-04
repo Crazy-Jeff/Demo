@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人项目库 · 待办 · 日历看板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ---------- 全局重置 & 变量 ---------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background: #f2f5f9;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        :root {
+            --primary: #2b7aff;
+            --primary-light: #eef4ff;
+            --border: #e6edf4;
+            --bg-card: #ffffff;
+            --text-dark: #0b1e33;
+            --text-mid: #1f3a5f;
+            --text-light: #5e6f8d;
+            --radius: 16px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .app {
+            max-width: 1480px;
+            width: 100%;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: fit-content;
+        }
+
+        /* ---------- 顶部导航 ---------- */
+        .navbar {
+            padding: 14px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: white;
+        }
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .brand {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand i {
+            color: var(--primary);
+            font-size: 20px;
+        }
+        .navbar .search-box {
+            background: #f1f4f9;
+            border-radius: 40px;
+            padding: 5px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+            min-width: 180px;
+        }
+        .navbar .search-box input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 14px;
+            padding: 5px 0;
+            width: 100%;
+            color: var(--text-dark);
+        }
+        .navbar .search-box input::placeholder {
+            color: var(--text-light);
+        }
+        .navbar .search-box i {
+            color: var(--text-light);
+        }
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-mid);
+        }
+        .navbar-right .user {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f1f4f9;
+            padding: 5px 14px 5px 10px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+        .navbar-right .user i {
+            color: var(--primary);
+        }
+        .navbar-right .cloud {
+            background: #eef4ff;
+            padding: 5px 14px;
+            border-radius: 40px;
+            color: var(--primary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ---------- 主体布局 ---------- */
+        .main-layout {
+            display: flex;
+            min-height: 600px;
+        }
+
+        /* ---------- 侧边栏 ---------- */
+        .sidebar {
+            width: 220px;
+            background: #fafcff;
+            border-right: 1px solid var(--border);
+            padding: 20px 0 20px 12px;
+            flex-shrink: 0;
+        }
+        .sidebar .nav-section {
+            margin-bottom: 24px;
+        }
+        .sidebar .nav-section .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding-left: 12px;
+            margin-bottom: 6px;
+        }
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            color: var(--text-mid);
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.15s;
+            margin-bottom: 2px;
+        }
+        .sidebar .nav-item i {
+            width: 20px;
+            font-size: 16px;
+            color: var(--text-light);
+        }
+        .sidebar .nav-item:hover {
+            background: var(--primary-light);
+            color: #1a3e7a;
+        }
+        .sidebar .nav-item.active {
+            background: #e1ebff;
+            color: #1a3e7a;
+            font-weight: 600;
+        }
+        .sidebar .nav-item.active i {
+            color: var(--primary);
+        }
+        .sidebar .nav-item .badge {
+            margin-left: auto;
+            background: #dce3ed;
+            color: #2f4a6b;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 8px;
+            border-radius: 40px;
+            line-height: 20px;
+        }
+        .sidebar .nav-item .badge.todo-badge {
+            background: #ffdcdc;
+            color: #b13a3a;
+        }
+
+        /* ---------- 内容区 ---------- */
+        .content {
+            flex: 1;
+            padding: 22px 28px 28px 28px;
+            overflow-x: auto;
+            background: #ffffff;
+        }
+
+        /* 视图切换 (隐藏/显示) */
+        .view-container {
+            display: none;
+        }
+        .view-container.active {
+            display: block;
+        }
+
+        /* ---------- 工具栏 ---------- */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .toolbar .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toolbar .left h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .toolbar .left .view-tabs {
+            display: flex;
+            background: #f1f4f9;
+            border-radius: 40px;
+            padding: 3px;
+            font-size: 13px;
+        }
+        .toolbar .left .view-tabs span {
+            padding: 4px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-weight: 500;
+            transition: 0.15s;
+        }
+        .toolbar .left .view-tabs span.active {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            color: var(--text-dark);
+        }
+        .toolbar .right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .toolbar .right i {
+            font-size: 16px;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            transition: 0.1s;
+        }
+        .toolbar .right i:hover {
+            background: #eef2f7;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid var(--primary);
+        }
+        .btn-primary:hover {
+            background: #1a5fd9;
+            border-color: #1a5fd9;
+        }
+        .btn-primary.outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        .btn-primary.outline:hover {
+            background: var(--primary-light);
+        }
+        .btn-sm {
+            padding: 3px 12px;
+            font-size: 12px;
+            border-radius: 30px;
+        }
+        .btn-danger {
+            background: #fde8e8;
+            color: #b13a3a;
+            border: none;
+            padding: 3px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .btn-danger:hover {
+            background: #fcd0d0;
+        }
+
+        /* ---------- 表格 ---------- */
+        .table-wrap {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: auto;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 700px;
+        }
+        th {
+            background: #f8fafd;
+            color: var(--text-mid);
+            font-weight: 600;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        th i {
+            margin-left: 4px;
+            color: var(--text-light);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #edf1f7;
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background: #f8fafd;
+        }
+        .td-tag {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #eef4ff;
+            color: #1f4e8a;
+        }
+        .td-tag.green {
+            background: #e3f5ec;
+            color: #0f6e4a;
+        }
+        .td-tag.orange {
+            background: #fff0e0;
+            color: #b45a1c;
+        }
+        .td-tag.red {
+            background: #fde8e8;
+            color: #b13a3a;
+        }
+        .td-tag.purple {
+            background: #ede7ff;
+            color: #5b3d9a;
+        }
+        .td-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .td-progress .bar {
+            width: 70px;
+            height: 6px;
+            background: #e1e8ef;
+            border-radius: 40px;
+            overflow: hidden;
+        }
+        .td-progress .bar .fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 40px;
+        }
+        .td-progress .bar .fill.green {
+            background: #1f9d6a;
+        }
+        .td-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .td-link i {
+            font-size: 12px;
+            margin-left: 4px;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid transparent;
+        }
+        .status-badge.pending {
+            background: #fff0e0;
+            color: #b45a1c;
+        }
+        .status-badge.in_progress {
+            background: #e1ebff;
+            color: #1f4e8a;
+        }
+        .status-badge.done {
+            background: #e3f5ec;
+            color: #0f6e4a;
+        }
+        .status-badge:hover {
+            opacity: 0.8;
+        }
+        .priority-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .priority-dot.high {
+            background: #e74c3c;
+        }
+        .priority-dot.medium {
+            background: #f39c12;
+        }
+        .priority-dot.low {
+            background: #2ecc71;
+        }
+        .empty-row td {
+            color: var(--text-light);
+            text-align: center;
+            padding: 40px 16px;
+            font-style: italic;
+        }
+        .add-row-bar {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-light);
+            font-size: 14px;
+            padding: 8px 4px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: 0.1s;
+        }
+        .add-row-bar:hover {
+            background: #f1f4f9;
+        }
+        .add-row-bar i {
+            color: var(--primary);
+        }
+
+        /* ---------- 筛选器 ---------- */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 8px 0;
+        }
+        .filter-bar select,
+        .filter-bar input {
+            padding: 5px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: white;
+            font-size: 13px;
+            color: var(--text-dark);
+            outline: none;
+            transition: 0.15s;
+        }
+        .filter-bar select:focus,
+        .filter-bar input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(43, 122, 255, 0.1);
+        }
+        .filter-bar .filter-label {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* ---------- 模态框 ---------- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 32px 36px;
+            max-width: 520px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: modalIn 0.25s ease;
+        }
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95) translateY(10px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal .form-group {
+            margin-bottom: 16px;
+        }
+        .modal .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-mid);
+            margin-bottom: 4px;
+        }
+        .modal .form-group input,
+        .modal .form-group select,
+        .modal .form-group textarea {
+            width: 100%;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            outline: none;
+            transition: 0.15s;
+            background: white;
+            color: var(--text-dark);
+        }
+        .modal .form-group input:focus,
+        .modal .form-group select:focus,
+        .modal .form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(43, 122, 255, 0.1);
+        }
+        .modal .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .modal .form-row {
+            display: flex;
+            gap: 16px;
+        }
+        .modal .form-row .form-group {
+            flex: 1;
+        }
+        .modal .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .modal .modal-actions .btn-secondary {
+            background: #f1f4f9;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text-mid);
+            transition: 0.15s;
+        }
+        .modal .modal-actions .btn-secondary:hover {
+            background: #e6ecf3;
+        }
+
+        /* ---------- 日历看板 ---------- */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .calendar-header .month-year {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .calendar-header .cal-nav {
+            display: flex;
+            gap: 6px;
+        }
+        .calendar-header .cal-nav button {
+            background: #f1f4f9;
+            border: none;
+            border-radius: 40px;
+            padding: 6px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text-mid);
+            font-weight: 500;
+            transition: 0.15s;
+        }
+        .calendar-header .cal-nav button:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .calendar-header .cal-nav button.today-btn {
+            background: var(--primary);
+            color: white;
+        }
+        .calendar-header .cal-nav button.today-btn:hover {
+            background: #1a5fd9;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: var(--border);
+        }
+        .calendar-grid .cal-day-header {
+            background: #f8fafd;
+            padding: 10px 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-mid);
+            border-bottom: 1px solid var(--border);
+        }
+        .calendar-grid .cal-day {
+            background: white;
+            min-height: 90px;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: 0.1s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .calendar-grid .cal-day:hover {
+            background: #f8fafd;
+        }
+        .calendar-grid .cal-day.other-month {
+            background: #fafcff;
+            color: var(--text-light);
+        }
+        .calendar-grid .cal-day .day-number {
+            font-weight: 500;
+            font-size: 15px;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+        .calendar-grid .cal-day.other-month .day-number {
+            color: var(--text-light);
+        }
+        .calendar-grid .cal-day .day-dots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 2px;
+        }
+        .calendar-grid .cal-day .day-dots .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        .calendar-grid .cal-day .day-dots .dot.done {
+            background: #2ecc71;
+        }
+        .calendar-grid .cal-day .day-dots .dot.high {
+            background: #e74c3c;
+        }
+        .calendar-grid .cal-day.today {
+            background: #eef4ff;
+            border: 2px solid var(--primary);
+        }
+        .calendar-grid .cal-day .day-todo-count {
+            font-size: 10px;
+            color: var(--text-light);
+            margin-top: auto;
+            text-align: right;
+        }
+
+        /* 日历侧边待办列表 */
+        .calendar-todo-side {
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 18px;
+        }
+        .calendar-todo-side h4 {
+            font-size: 15px;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+        .calendar-todo-side .todo-item-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            background: #f8fafd;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .calendar-todo-side .todo-item-mini .todo-title {
+            flex: 1;
+            color: var(--text-dark);
+        }
+        .calendar-todo-side .todo-item-mini .todo-project {
+            font-size: 12px;
+            color: var(--text-light);
+            background: #eef4ff;
+            padding: 0 10px;
+            border-radius: 40px;
+        }
+        .calendar-todo-side .empty-tip {
+            color: var(--text-light);
+            font-size: 14px;
+            padding: 10px 0;
+        }
+
+        /* ---------- 响应式 ---------- */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 60px;
+                padding: 16px 4px;
+            }
+            .sidebar .nav-item span {
+                display: none;
+            }
+            .sidebar .nav-item .badge {
+                display: none;
+            }
+            .sidebar .section-title {
+                display: none;
+            }
+            .content {
+                padding: 16px 16px 20px 16px;
+            }
+        }
+        @media (max-width: 700px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                flex-wrap: wrap;
+                gap: 2px;
+                padding: 10px 12px;
+                background: #fafcff;
+            }
+            .sidebar .nav-section {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 2px;
+                margin-bottom: 0;
+            }
+            .sidebar .nav-item {
+                padding: 5px 10px;
+                font-size: 13px;
+            }
+            .sidebar .nav-item span {
+                display: inline;
+            }
+            .sidebar .section-title {
+                display: none;
+            }
+            .navbar {
+                padding: 10px 16px;
+            }
+            .navbar .search-box {
+                min-width: 120px;
+                flex: 1;
+            }
+            .modal {
+                padding: 24px 20px;
+            }
+            .calendar-grid .cal-day {
+                min-height: 60px;
+                padding: 4px 4px;
+                font-size: 12px;
+            }
+            .calendar-grid .cal-day .day-number {
+                font-size: 13px;
+            }
+            .toolbar .left h2 {
+                font-size: 17px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- ===== 顶部导航 ===== -->
+    <div class="navbar">
+        <div class="navbar-left">
+            <div class="brand"><i class="fas fa-table"></i> 个人项目库</div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="搜索项目、待办..." id="globalSearch" oninput="globalSearch(this.value)">
+            </div>
+        </div>
+        <div class="navbar-right">
+            <span class="cloud"><i class="fas fa-cloud-upload-alt"></i> 已保存</span>
+            <span class="user"><i class="fas fa-user-circle"></i> 陈泽福</span>
+        </div>
+    </div>
+
+    <!-- ===== 主体 ===== -->
+    <div class="main-layout">
+
+        <!-- ===== 侧边栏 ===== -->
+        <div class="sidebar">
+            <div class="nav-section">
+                <div class="section-title">导航</div>
+                <div class="nav-item active" data-view="project"><i class="fas fa-folder-open"></i><span>项目库</span><span class="badge" id="projectCount">0</span></div>
+                <div class="nav-item" data-view="todo"><i class="fas fa-check-circle"></i><span>待办事项</span><span class="badge todo-badge" id="todoCount">0</span></div>
+                <div class="nav-item" data-view="calendar"><i class="fas fa-calendar-alt"></i><span>日历看板</span></div>
+            </div>
+            <div class="nav-section">
+                <div class="section-title">资源库</div>
+                <div class="nav-item" data-view="vision"><i class="fas fa-camera"></i><span>视觉库</span><span class="badge">12</span></div>
+                <div class="nav-item" data-view="tools"><i class="fas fa-tools"></i><span>工具库</span><span class="badge">5</span></div>
+                <div class="nav-item" data-view="cases"><i class="fas fa-book-open"></i><span>案例库</span><span class="badge">4</span></div>
+                <div class="nav-item" data-view="knowledge"><i class="fas fa-database"></i><span>知识库</span><span class="badge">9</span></div>
+            </div>
+            <div class="nav-section">
+                <div class="section-title">快捷</div>
+                <div class="nav-item" data-view="recent"><i class="fas fa-clock"></i><span>最近</span></div>
+                <div class="nav-item" data-view="favorites"><i class="fas fa-star"></i><span>收藏</span></div>
+            </div>
+        </div>
+
+        <!-- ===== 内容区 ===== -->
+        <div class="content">
+
+            <!-- ========== 视图：项目库 ========== -->
+            <div class="view-container active" id="viewProject">
+                <div class="toolbar">
+                    <div class="left">
+                        <h2>📋 项目总表</h2>
+                        <div class="view-tabs">
+                            <span class="active">表格</span>
+                            <span>看板</span>
+                            <span>仪表盘</span>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <i class="fas fa-columns" title="字段配置"></i>
+                        <i class="fas fa-sliders-h" title="筛选"></i>
+                        <button class="btn-primary" onclick="openAddProject()"><i class="fas fa-plus"></i> 添加项目</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>工单号 <i class="fas fa-sort"></i></th>
+                                <th>客户公司 <i class="fas fa-sort"></i></th>
+                                <th>项目名称 <i class="fas fa-sort"></i></th>
+                                <th>创建时间 <i class="fas fa-sort"></i></th>
+                                <th>阶段 <i class="fas fa-sort"></i></th>
+                                <th>进度 <i class="fas fa-sort"></i></th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectTableBody">
+                            <!-- 由 JS 动态渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="add-row-bar" onclick="openAddProject()">
+                    <i class="fas fa-plus-circle"></i> 点击添加新项目
+                </div>
+                <div style="margin-top:16px;font-size:13px;color:var(--text-light);border-top:1px solid var(--border);padding-top:14px;display:flex;gap:20px;flex-wrap:wrap;">
+                    <span><i class="fas fa-link" style="color:var(--primary);"></i> 工单号唯一，待办事项可关联项目</span>
+                    <span id="projectStat"><i class="fas fa-database"></i> 共 0 个项目</span>
+                </div>
+            </div>
+
+            <!-- ========== 视图：待办事项 ========== -->
+            <div class="view-container" id="viewTodo">
+                <div class="toolbar">
+                    <div class="left">
+                        <h2>✅ 待办事项</h2>
+                        <div class="view-tabs">
+                            <span class="active">列表</span>
+                            <span>看板</span>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <button class="btn-primary" onclick="openAddTodo()"><i class="fas fa-plus"></i> 添加待办</button>
+                    </div>
+                </div>
+
+                <!-- 筛选 -->
+                <div class="filter-bar">
+                    <span class="filter-label">筛选：</span>
+                    <select id="todoFilterProject" onchange="renderTodos()">
+                        <option value="">全部项目</option>
+                    </select>
+                    <select id="todoFilterStatus" onchange="renderTodos()">
+                        <option value="">全部状态</option>
+                        <option value="pending">待办</option>
+                        <option value="in_progress">进行中</option>
+                        <option value="done">已完成</option>
+                    </select>
+                    <input type="text" id="todoFilterKeyword" placeholder="搜索标题..." oninput="renderTodos()" style="width:140px;">
+                    <span style="font-size:13px;color:var(--text-light);margin-left:auto;" id="todoCountLabel">共 0 项</span>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>标题</th>
+                                <th>关联项目</th>
+                                <th>截止日期</th>
+                                <th>优先级</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="todoTableBody">
+                            <!-- 由 JS 动态渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="add-row-bar" onclick="openAddTodo()">
+                    <i class="fas fa-plus-circle"></i> 点击添加待办事项
+                </div>
+            </div>
+
+            <!-- ========== 视图：日历看板 ========== -->
+            <div class="view-container" id="viewCalendar">
+                <div class="toolbar">
+                    <div class="left">
+                        <h2>📅 日历看板</h2>
+                    </div>
+                    <div class="right">
+                        <button class="btn-primary outline btn-sm" onclick="goToday()"><i class="fas fa-calendar-day"></i> 今日</button>
+                    </div>
+                </div>
+
+                <div class="calendar-header">
+                    <div class="month-year" id="calMonthYear">2026年9月</div>
+                    <div class="cal-nav">
+                        <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i> 上月</button>
+                        <button onclick="changeMonth(1)">下月 <i class="fas fa-chevron-right"></i></button>
+                        <button class="today-btn" onclick="goToday()">今天</button>
+                    </div>
+                </div>
+
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- 由 JS 动态渲染 -->
+                </div>
+
+                <div class="calendar-todo-side" id="calendarTodoSide">
+                    <h4 id="calSideTitle">📌 待办事项</h4>
+                    <div id="calSideList">
+                        <div class="empty-tip">请点击日历中的日期查看待办</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 占位视图（其他库） ========== -->
+            <div class="view-container" id="viewVision"><div style="padding:60px 0;text-align:center;color:var(--text-light);"><i class="fas fa-camera" style="font-size:48px;opacity:0.3;display:block;margin-bottom:16px;"></i>视觉库 · 配置管理</div></div>
+            <div class="view-container" id="viewTools"><div style="padding:60px 0;text-align:center;color:var(--text-light);"><i class="fas fa-tools" style="font-size:48px;opacity:0.3;display:block;margin-bottom:16px;"></i>工具库 · 设备与配件</div></div>
+            <div class="view-container" id="viewCases"><div style="padding:60px 0;text-align:center;color:var(--text-light);"><i class="fas fa-book-open" style="font-size:48px;opacity:0.3;display:block;margin-bottom:16px;"></i>案例库 · 项目案例</div></div>
+            <div class="view-container" id="viewKnowledge"><div style="padding:60px 0;text-align:center;color:var(--text-light);"><i class="fas fa-database" style="font-size:48px;opacity:0.3;display:block;margin-bottom:16px;"></i>知识库 · 技术文档</div></div>
+            <div class="view-container" id="viewRecent"><div style="padding:60px 0;text-align:center;color:var(--text-light);"><i class="fas fa-clock" style="font-size:48px;opacity:0.3;display:block;margin-bottom:16px;"></i>最近访问</div></div>
+            <div class="view-container" id="viewFavorites"><div style="padding:60px 0;text-align:center;color:var(--text-light);"><i class="fas fa-star" style="font-size:48px;opacity:0.3;display:block;margin-bottom:16px;"></i>我的收藏</div></div>
+
+        </div><!-- /content -->
+    </div><!-- /main-layout -->
+</div><!-- /app -->
+
+<!-- ===== 模态框：添加/编辑项目 ===== -->
+<div class="modal-overlay" id="projectModal">
+    <div class="modal">
+        <h3><i class="fas fa-folder-plus" style="color:var(--primary);"></i> <span id="projectModalTitle">添加项目</span></h3>
+        <div class="form-group">
+            <label>工单号 *</label>
+            <input type="text" id="pInputId" placeholder="例如 XW26008" value="">
+        </div>
+        <div class="form-group">
+            <label>客户公司 *</label>
+            <input type="text" id="pInputCustomer" placeholder="例如 冠捷科技-福建厦门" value="">
+        </div>
+        <div class="form-group">
+            <label>项目名称 *</label>
+            <input type="text" id="pInputName" placeholder="项目名称" value="">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>创建时间</label>
+                <input type="date" id="pInputDate" value="">
+            </div>
+            <div class="form-group">
+                <label>阶段</label>
+                <select id="pInputStage">
+                    <option value="方案阶段">方案阶段</option>
+                    <option value="设计阶段">设计阶段</option>
+                    <option value="实施阶段">实施阶段</option>
+                    <option value="调试阶段">调试阶段</option>
+                    <option value="生产阶段" selected>生产阶段</option>
+                    <option value="验收阶段">验收阶段</option>
+                    <option value="已完成">已完成</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>进度 (%)</label>
+            <input type="number" id="pInputProgress" min="0" max="100" value="50">
+        </div>
+        <div class="form-group">
+            <label>备注</label>
+            <textarea id="pInputNote" rows="2" placeholder="项目备注"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('projectModal')">取消</button>
+            <button class="btn-primary" onclick="saveProject()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 模态框：添加/编辑待办 ===== -->
+<div class="modal-overlay" id="todoModal">
+    <div class="modal">
+        <h3><i class="fas fa-plus-circle" style="color:var(--primary);"></i> <span id="todoModalTitle">添加待办</span></h3>
+        <div class="form-group">
+            <label>标题 *</label>
+            <input type="text" id="tInputTitle" placeholder="待办事项标题" value="">
+        </div>
+        <div class="form-group">
+            <label>关联项目</label>
+            <select id="tInputProject"><option value="">不关联项目</option></select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>截止日期</label>
+                <input type="date" id="tInputDue" value="">
+            </div>
+            <div class="form-group">
+                <label>优先级</label>
+                <select id="tInputPriority">
+                    <option value="high">高</option>
+                    <option value="medium" selected>中</option>
+                    <option value="low">低</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>描述</label>
+            <textarea id="tInputDesc" rows="2" placeholder="详细描述"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('todoModal')">取消</button>
+            <button class="btn-primary" onclick="saveTodo()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================================================================
+    //  数据层
+    // ================================================================
+    const STORAGE_KEY_PROJECTS = 'my_projects';
+    const STORAGE_KEY_TODOS = 'my_todos';
+
+    // 默认项目数据（来自截图）
+    const DEFAULT_PROJECTS = [
+        { id: 'XW26008', customer: '冠捷科技-福建厦门', name: 'MA07线 (OLED线&普通机种)', date: '2026-04-01', stage: '生产阶段', progress: 80, note: 'A~D四个区域 TT: OLED 25s' },
+        { id: 'XW26007', customer: '景昇-安徽蚌埠', name: '2期', date: '2026-04-01', stage: '设计阶段', progress: 45, note: '规划中' },
+        { id: 'XW25099', customer: '中航锂电-福建厦门', name: 'A6改造线', date: '2026-04-01', stage: '生产阶段', progress: 92, note: '即将交付' },
+        { id: 'XW25087', customer: '景昇-安徽蚌埠', name: '1期', date: '2026-03-01', stage: '验收阶段', progress: 100, note: '已完成' },
+        { id: 'XW26012', customer: '友达光电-福建厦门', name: '12.88寸 & 15.6寸改造', date: '2026-09-04', stage: '出图阶段', progress: 30, note: '4台单机改造' },
+        { id: 'XW26015', customer: '冠捷科技-福建厦门', name: 'MA05线 (TV机种)', date: '2026-08-20', stage: '调试阶段', progress: 65, note: '配合产线升级' },
+        { id: 'XW26020', customer: '福莱特-浙江嘉兴', name: '玻璃检测线', date: '2026-07-15', stage: '方案阶段', progress: 20, note: '视觉系统评估' },
+        { id: 'XW26022', customer: '宸亚-河南开封', name: '光伏组件检测', date: '2026-06-01', stage: '实施阶段', progress: 55, note: '3D视觉部署' }
+    ];
+
+    // 默认待办示例
+    const DEFAULT_TODOS = [
+        { id: 't_001', title: '完成MA07线视觉方案设计', description: '确定相机选型与光源配置', projectId: 'XW26008', dueDate: '2026-09-15', priority: 'high', status: 'in_progress' },
+        { id: 't_002', title: '友达改造项目出图评审', description: '组织内部评审会', projectId: 'XW26012', dueDate: '2026-09-20', priority: 'medium', status: 'pending' },
+        { id: 't_003', title: '福莱特玻璃检测方案初稿', description: '与客户沟通需求', projectId: 'XW26020', dueDate: '2026-09-25', priority: 'medium', status: 'pending' },
+        { id: 't_004', title: '光伏组件3D视觉部署报告', description: '整理测试数据', projectId: 'XW26022', dueDate: '2026-09-10', priority: 'high', status: 'in_progress' },
+        { id: 't_005', title: 'MA05线调试支持', description: '现场配合产线', projectId: 'XW26015', dueDate: '2026-09-08', priority: 'low', status: 'done' },
+        { id: 't_006', title: '项目库数据整理', description: '更新所有项目进度', projectId: '', dueDate: '2026-09-06', priority: 'medium', status: 'pending' }
+    ];
+
+    function loadData(key, defaultData) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+        // 首次使用，存入默认数据
+        localStorage.setItem(key, JSON.stringify(defaultData));
+        return defaultData;
+    }
+
+    function saveData(key, data) {
+        localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    let projects = loadData(STORAGE_KEY_PROJECTS, DEFAULT_PROJECTS);
+    let todos = loadData(STORAGE_KEY_TODOS, DEFAULT_TODOS);
+
+    // ================================================================
+    //  工具函数
+    // ================================================================
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 4); }
+
+    function formatDate(d) {
+        if (!d) return '-';
+        const parts = d.split('-');
+        return `${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
+    }
+
+    function getProjectName(id) {
+        if (!id) return '未关联';
+        const p = projects.find(x => x.id === id);
+        return p ? p.name : '已删除项目';
+    }
+
+    function getProjectCustomer(id) {
+        if (!id) return '';
+        const p = projects.find(x => x.id === id);
+        return p ? p.customer : '';
+    }
+
+    function getStatusLabel(status) {
+        const map = { pending: '待办', in_progress: '进行中', done: '已完成' };
+        return map[status] || status;
+    }
+
+    function getPriorityLabel(p) {
+        const map = { high: '高', medium: '中', low: '低' };
+        return map[p] || p;
+    }
+
+    function getStageColor(stage) {
+        const map = {
+            '方案阶段': 'orange',
+            '设计阶段': 'orange',
+            '实施阶段': 'purple',
+            '调试阶段': 'purple',
+            '生产阶段': 'green',
+            '验收阶段': 'green',
+            '已完成': 'green',
+            '出图阶段': 'orange'
+        };
+        return map[stage] || 'purple';
+    }
+
+    // ================================================================
+    //  项目库渲染
+    // ================================================================
+    function renderProjects() {
+        const tbody = document.getElementById('projectTableBody');
+        if (!projects.length) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="7">暂无项目，点击「添加项目」创建</td></tr>`;
+            document.getElementById('projectCount').textContent = '0';
+            document.getElementById('projectStat').innerHTML = `<i class="fas fa-database"></i> 共 0 个项目`;
+            return;
+        }
+        let html = '';
+        projects.forEach(p => {
+            const color = getStageColor(p.stage);
+            html += `<tr>
+                <td><span class="td-tag">${p.id}</span></td>
+                <td><i class="fas fa-building" style="color:var(--text-light);margin-right:6px;"></i>${p.customer}</td>
+                <td><strong>${p.name}</strong></td>
+                <td>${formatDate(p.date)}</td>
+                <td><span class="td-tag ${color}">${p.stage || '未设置'}</span></td>
+                <td>
+                    <div class="td-progress">
+                        <span>${p.progress || 0}%</span>
+                        <div class="bar"><div class="fill ${p.progress >= 80 ? 'green' : ''}" style="width:${p.progress || 0}%"></div></div>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn-danger btn-sm" onclick="deleteProject('${p.id}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        document.getElementById('projectCount').textContent = projects.length;
+        document.getElementById('projectStat').innerHTML = `<i class="fas fa-database"></i> 共 ${projects.length} 个项目`;
+        // 更新待办中的项目下拉
+        populateProjectSelects();
+    }
+
+    // ================================================================
+    //  待办事项渲染
+    // ================================================================
+    function renderTodos() {
+        const filterProject = document.getElementById('todoFilterProject').value;
+        const filterStatus = document.getElementById('todoFilterStatus').value;
+        const keyword = document.getElementById('todoFilterKeyword').value.trim().toLowerCase();
+
+        let filtered = todos.filter(t => {
+            if (filterProject && t.projectId !== filterProject) return false;
+            if (filterStatus && t.status !== filterStatus) return false;
+            if (keyword && !t.title.toLowerCase().includes(keyword)) return false;
+            return true;
+        });
+
+        // 按截止日期排序
+        filtered.sort((a, b) => (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31'));
+
+        const tbody = document.getElementById('todoTableBody');
+        if (!filtered.length) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="6">暂无待办事项</td></tr>`;
+            document.getElementById('todoCount').textContent = todos.length;
+            document.getElementById('todoCountLabel').textContent = `共 ${todos.length} 项`;
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(t => {
+            const pName = getProjectName(t.projectId);
+            const pCustomer = getProjectCustomer(t.projectId);
+            const statusMap = { pending: '待办', in_progress: '进行中', done: '已完成' };
+            const statusClass = t.status || 'pending';
+            const priClass = t.priority || 'medium';
+            html += `<tr>
+                <td><strong>${t.title}</strong> ${t.description ? `<span style="color:var(--text-light);font-size:12px;display:block;">${t.description}</span>` : ''}</td>
+                <td>${t.projectId ? `<span class="td-tag" style="background:#eef4ff;">${pCustomer ? pCustomer + ' · ' : ''}${pName}</span>` : '<span style="color:var(--text-light);font-size:13px;">未关联</span>'}</td>
+                <td>${t.dueDate ? formatDate(t.dueDate) : '-'}</td>
+                <td><span class="priority-dot ${priClass}"></span>${getPriorityLabel(priClass)}</td>
+                <td>
+                    <span class="status-badge ${statusClass}" onclick="toggleTodoStatus('${t.id}')" title="点击切换状态">
+                        ${statusMap[statusClass] || '待办'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn-danger btn-sm" onclick="deleteTodo('${t.id}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        document.getElementById('todoCount').textContent = todos.length;
+        document.getElementById('todoCountLabel').textContent = `共 ${todos.length} 项 (筛选 ${filtered.length})`;
+    }
+
+    // ================================================================
+    //  日历看板渲染
+    // ================================================================
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth(); // 0-based
+    let selectedCalDate = null;
+
+    function renderCalendar(year, month) {
+        const grid = document.getElementById('calendarGrid');
+        const header = document.getElementById('calMonthYear');
+        header.textContent = `${year}年${month + 1}月`;
+
+        const firstDay = new Date(year, month, 1).getDay(); // 0=周日
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrev = new Date(year, month, 0).getDate();
+
+        // 构建日期 -> 待办列表映射
+        const todoMap = {};
+        todos.forEach(t => {
+            if (t.dueDate) {
+                const d = t.dueDate;
+                if (!todoMap[d]) todoMap[d] = [];
+                todoMap[d].push(t);
+            }
+        });
+
+        let html = '';
+        const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+        weekDays.forEach(d => {
+            html += `<div class="cal-day-header">${d}</div>`;
+        });
+
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+        // 填充上月空白
+        for (let i = 0; i < firstDay; i++) {
+            const day = daysInPrev - firstDay + i + 1;
+            const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            html += `<div class="cal-day other-month" data-date="${dateStr}" onclick="selectCalDate('${dateStr}')">
+                <div class="day-number">${day}</div>
+            </div>`;
+        }
+
+        // 本月
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const isToday = dateStr === todayStr;
+            const todosOnDay = todoMap[dateStr] || [];
+            const hasTodos = todosOnDay.length > 0;
+            const hasDone = todosOnDay.some(t => t.status === 'done');
+            const hasHigh = todosOnDay.some(t => t.priority === 'high');
+
+            let dotHtml = '';
+            if (hasTodos) {
+                // 显示最多3个点
+                const dots = [];
+                if (hasHigh) dots.push('high');
+                if (hasDone && !hasHigh) dots.push('done');
+                if (!hasDone && !hasHigh) dots.push('dot');
+                // 如果多于1个，混合显示
+                if (todosOnDay.length > 1) {
+                    if (!dots.includes('high') && todosOnDay.some(t => t.priority === 'high')) dots.push('high');
+                    if (!dots.includes('done') && todosOnDay.some(t => t.status === 'done')) dots.push('done');
+                    if (dots.length < 2) dots.push('dot');
+                }
+                dotHtml = `<div class="day-dots">${dots.map(cls => `<span class="dot ${cls}"></span>`).join('')}</div>`;
+            }
+
+            const countHtml = hasTodos ? `<div class="day-todo-count">${todosOnDay.length}</div>` : '';
+
+            html += `<div class="cal-day ${isToday ? 'today' : ''}" data-date="${dateStr}" onclick="selectCalDate('${dateStr}')">
+                <div class="day-number">${d}</div>
+                ${dotHtml}
+                ${countHtml}
+            </div>`;
+        }
+
+        // 补全下月空白
+        const totalCells = firstDay + daysInMonth;
+        const remain = (7 - totalCells % 7) % 7;
+        for (let i = 1; i <= remain; i++) {
+            const dateStr = `${year}-${String(month+2).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            html += `<div class="cal-day other-month" data-date="${dateStr}" onclick="selectCalDate('${dateStr}')">
+                <div class="day-number">${i}</div>
+            </div>`;
+        }
+
+        grid.innerHTML = html;
+
+        // 默认选中今天（如果今天在当月）
+        if (selectedCalDate) {
+            selectCalDate(selectedCalDate);
+        } else {
+            // 自动选中今天
+            const todayDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            selectCalDate(todayDate);
+        }
+    }
+
+    function selectCalDate(dateStr) {
+        selectedCalDate = dateStr;
+        // 高亮
+        document.querySelectorAll('.cal-day').forEach(el => {
+            el.style.outline = 'none';
+            if (el.dataset.date === dateStr) {
+                el.style.outline = '2px solid var(--primary)';
+                el.style.outlineOffset = '-2px';
+                el.style.borderRadius = '4px';
+            } else {
+                el.style.outline = 'none';
+            }
+        });
+
+        // 显示该日待办
+        const sideList = document.getElementById('calSideList');
+        const sideTitle = document.getElementById('calSideTitle');
+        const todosOnDay = todos.filter(t => t.dueDate === dateStr);
+        if (!dateStr) {
+            sideTitle.textContent = '📌 请选择日期';
+            sideList.innerHTML = '<div class="empty-tip">点击日历中的日期查看待办</div>';
+            return;
+        }
+        const parts = dateStr.split('-');
+        const displayDate = `${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
+        sideTitle.textContent = `📌 ${displayDate} 的待办事项`;
+
+        if (!todosOnDay.length) {
+            sideList.innerHTML = `<div class="empty-tip">🎉 这一天没有待办事项</div>`;
+            return;
+        }
+        let html = '';
+        todosOnDay.forEach(t => {
+            const pName = getProjectName(t.projectId);
+            const statusMap = { pending: '待办', in_progress: '进行中', done: '已完成' };
+            const cls = t.status || 'pending';
+            html += `<div class="todo-item-mini">
+                <span class="status-badge ${cls}" style="font-size:11px;padding:0 8px;">${statusMap[cls] || '待办'}</span>
+                <span class="todo-title">${t.title}</span>
+                ${t.projectId ? `<span class="todo-project">${pName}</span>` : ''}
+            </div>`;
+        });
+        sideList.innerHTML = html;
+    }
+
+    function changeMonth(delta) {
+        calMonth += delta;
+        if (calMonth < 0) { calMonth = 11; calYear--; }
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        selectedCalDate = null;
+        renderCalendar(calYear, calMonth);
+    }
+
+    function goToday() {
+        const today = new Date();
+        calYear = today.getFullYear();
+        calMonth = today.getMonth();
+        selectedCalDate = null;
+        renderCalendar(calYear, calMonth);
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+        selectCalDate(todayStr);
+    }
+
+    // ================================================================
+    //  项目 CRUD
+    // ================================================================
+    let editingProjectId = null;
+
+    function openAddProject() {
+        editingProjectId = null;
+        document.getElementById('projectModalTitle').textContent = '添加项目';
+        document.getElementById('pInputId').value = '';
+        document.getElementById('pInputCustomer').value = '';
+        document.getElementById('pInputName').value = '';
+        document.getElementById('pInputDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('pInputStage').value = '方案阶段';
+        document.getElementById('pInputProgress').value = '50';
+        document.getElementById('pInputNote').value = '';
+        document.getElementById('projectModal').classList.add('show');
+    }
+
+    function saveProject() {
+        const id = document.getElementById('pInputId').value.trim();
+        const customer = document.getElementById('pInputCustomer').value.trim();
+        const name = document.getElementById('pInputName').value.trim();
+        const date = document.getElementById('pInputDate').value;
+        const stage = document.getElementById('pInputStage').value;
+        const progress = parseInt(document.getElementById('pInputProgress').value) || 0;
+        const note = document.getElementById('pInputNote').value.trim();
+
+        if (!id || !customer || !name) {
+            alert('请填写工单号、客户公司、项目名称');
+            return;
+        }
+
+        // 检查重名
+        if (!editingProjectId && projects.some(p => p.id === id)) {
+            alert('工单号已存在，请使用唯一编号');
+            return;
+        }
+
+        if (editingProjectId) {
+            const idx = projects.findIndex(p => p.id === editingProjectId);
+            if (idx > -1) {
+                projects[idx] = { ...projects[idx], id, customer, name, date, stage, progress, note };
+            }
+        } else {
+            projects.push({ id, customer, name, date, stage, progress, note });
+        }
+
+        saveData(STORAGE_KEY_PROJECTS, projects);
+        closeModal('projectModal');
+        renderProjects();
+        renderTodos();
+        renderCalendar(calYear, calMonth);
+        populateProjectSelects();
+    }
+
+    function deleteProject(id) {
+        if (!confirm(`确定要删除项目 "${id}" 吗？`)) return;
+        projects = projects.filter(p => p.id !== id);
+        // 同时删除关联待办中的项目引用（置空）
+        todos.forEach(t => { if (t.projectId === id) t.projectId = ''; });
+        saveData(STORAGE_KEY_PROJECTS, projects);
+        saveData(STORAGE_KEY_TODOS, todos);
+        renderProjects();
+        renderTodos();
+        renderCalendar(calYear, calMonth);
+        populateProjectSelects();
+    }
+
+    // ================================================================
+    //  待办 CRUD
+    // ================================================================
+    let editingTodoId = null;
+
+    function openAddTodo() {
+        editingTodoId = null;
+        document.getElementById('todoModalTitle').textContent = '添加待办';
+        document.getElementById('tInputTitle').value = '';
+        document.getElementById('tInputDesc').value = '';
+        document.getElementById('tInputDue').value = new Date().toISOString().split('T')[0];
+        document.getElementById('tInputPriority').value = 'medium';
+        populateProjectSelects();
+        document.getElementById('tInputProject').value = '';
+        document.getElementById('todoModal').classList.add('show');
+    }
+
+    function populateProjectSelects() {
+        const selects = ['tInputProject', 'todoFilterProject'];
+        selects.forEach(sid => {
+            const sel = document.getElementById(sid);
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = sid === 'todoFilterProject' ? '<option value="">全部项目</option>' : '<option value="">不关联项目</option>';
+            projects.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.id} · ${p.name}`;
+                sel.appendChild(opt);
+            });
+            if (current) sel.value = current;
+        });
+    }
+
+    function saveTodo() {
+        const title = document.getElementById('tInputTitle').value.trim();
+        const desc = document.getElementById('tInputDesc').value.trim();
+        const projectId = document.getElementById('tInputProject').value;
+        const dueDate = document.getElementById('tInputDue').value;
+        const priority = document.getElementById('tInputPriority').value;
+
+        if (!title) {
+            alert('请输入待办标题');
+            return;
+        }
+
+        if (editingTodoId) {
+            const idx = todos.findIndex(t => t.id === editingTodoId);
+            if (idx > -1) {
+                todos[idx] = { ...todos[idx], title, description: desc, projectId, dueDate, priority };
+            }
+        } else {
+            todos.push({
+                id: 't_' + genId(),
+                title,
+                description: desc,
+                projectId,
+                dueDate,
+                priority,
+                status: 'pending'
+            });
+        }
+
+        saveData(STORAGE_KEY_TODOS, todos);
+        closeModal('todoModal');
+        renderTodos();
+        renderCalendar(calYear, calMonth);
+        updateBadgeCounts();
+    }
+
+    function deleteTodo(id) {
+        if (!confirm('确定删除此待办吗？')) return;
+        todos = todos.filter(t => t.id !== id);
+        saveData(STORAGE_KEY_TODOS, todos);
+        renderTodos();
+        renderCalendar(calYear, calMonth);
+        updateBadgeCounts();
+    }
+
+    function toggleTodoStatus(id) {
+        const t = todos.find(x => x.id === id);
+        if (!t) return;
+        const map = { pending: 'in_progress', in_progress: 'done', done: 'pending' };
+        t.status = map[t.status] || 'pending';
+        saveData(STORAGE_KEY_TODOS, todos);
+        renderTodos();
+        renderCalendar(calYear, calMonth);
+        updateBadgeCounts();
+    }
+
+    // ================================================================
+    //  模态框 / 导航切换
+    // ================================================================
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+    // 点击遮罩关闭
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('show');
+        });
+    });
+
+    // 侧边栏导航切换
+    document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.sidebar .nav-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+
+            const view = this.dataset.view;
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+
+            // 映射视图ID
+            const map = {
+                project: 'viewProject',
+                todo: 'viewTodo',
+                calendar: 'viewCalendar',
+                vision: 'viewVision',
+                tools: 'viewTools',
+                cases: 'viewCases',
+                knowledge: 'viewKnowledge',
+                recent: 'viewRecent',
+                favorites: 'viewFavorites'
+            };
+            const target = document.getElementById(map[view]);
+            if (target) target.classList.add('active');
+
+            // 如果切换到日历，刷新
+            if (view === 'calendar') {
+                renderCalendar(calYear, calMonth);
+            }
+            if (view === 'todo') {
+                renderTodos();
+            }
+            if (view === 'project') {
+                renderProjects();
+            }
+        });
+    });
+
+    // ================================================================
+    //  全局搜索
+    // ================================================================
+    function globalSearch(keyword) {
+        // 简单搜索：跳转到待办并过滤
+        const kw = keyword.trim().toLowerCase();
+        if (!kw) {
+            document.querySelector('[data-view="todo"]')?.click();
+            document.getElementById('todoFilterKeyword').value = '';
+            renderTodos();
+            return;
+        }
+        // 切换到待办视图
+        document.querySelector('[data-view="todo"]')?.click();
+        document.getElementById('todoFilterKeyword').value = kw;
+        renderTodos();
+    }
+
+    // ================================================================
+    //  更新角标
+    // ================================================================
+    function updateBadgeCounts() {
+        document.getElementById('todoCount').textContent = todos.length;
+        document.getElementById('projectCount').textContent = projects.length;
+    }
+
+    // ================================================================
+    //  初始化
+    // ================================================================
+    function init() {
+        renderProjects();
+        renderTodos();
+        const today = new Date();
+        calYear = today.getFullYear();
+        calMonth = today.getMonth();
+        renderCalendar(calYear, calMonth);
+        populateProjectSelects();
+        updateBadgeCounts();
+
+        // 默认选中项目库
+        document.querySelector('[data-view="project"]')?.click();
+    }
+
+    init();
+
+    // 暴露全局函数供 onclick 调用
+    window.openAddProject = openAddProject;
+    window.saveProject = saveProject;
+    window.deleteProject = deleteProject;
+    window.openAddTodo = openAddTodo;
+    window.saveTodo = saveTodo;
+    window.deleteTodo = deleteTodo;
+    window.toggleTodoStatus = toggleTodoStatus;
+    window.closeModal = closeModal;
+    window.changeMonth = changeMonth;
+    window.goToday = goToday;
+    window.selectCalDate = selectCalDate;
+    window.globalSearch = globalSearch;
+    window.renderTodos = renderTodos;
+    window.renderProjects = renderProjects;
+    window.renderCalendar = renderCalendar;
+    window.populateProjectSelects = populateProjectSelects;
+</script>
+
+</body>
+</html>
