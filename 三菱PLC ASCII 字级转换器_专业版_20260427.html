@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>三菱PLC ASCII 字级转换器（专业版）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 微软雅黑;
+        }
+        body {
+            padding: 15px;
+            background: #f7f7f7;
+        }
+        textarea {
+            width: 100%;
+            height: 160px;
+            margin: 8px 0;
+            padding: 10px;
+            border: 1px solid #bbb;
+            font-size: 14px;
+        }
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: 0;
+            background: #007bff;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button.gray {
+            background: #6c757d;
+        }
+        button.copy-btn {
+            background: #17a2b8;
+            font-size: 12px;
+            padding: 4px 10px;
+            margin-left: 10px;
+        }
+        .opt {
+            margin: 10px 0;
+        }
+        label {
+            margin-right: 15px;
+            font-size: 14px;
+        }
+        h3 {
+            margin: 10px 0;
+            color: #222;
+        }
+        .panel {
+            margin-bottom: 30px;
+        }
+        .info {
+            background: #eef6ff;
+            padding: 10px 12px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0 25px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .info h4 {
+            margin-bottom: 6px;
+            color: #0056b3;
+        }
+        .info .demo {
+            background: #fff;
+            padding: 6px 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-family: Consolas;
+        }
+        .tip {
+            font-size: 13px;
+            color: #d9534f;
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+        .output-header {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="info">
+    <h4>📌 小端 / 大端 区别（一看就懂）</h4>
+    <div class="demo">
+        字符：AB → 1个字 = A + B<br>
+        <strong>小端（低字节在前）</strong>：B A → 显示为 4241<br>
+        <strong>大端（高字节在前）</strong>：A B → 显示为 4142
+    </div>
+    ✅ <strong>小端</strong>：三菱、欧姆龙、台达、信捷、汇川<br>
+    ✅ <strong>大端</strong>：西门子、罗克韦尔、基恩士
+</div>
+
+<!-- 文本 → 字格式 -->
+<div class="panel">
+    <h3>🔵 ASCII 文本 → 三菱字格式（D寄存器显示）</h3>
+    <div class="tip">💡 支持直接粘贴含空格的文本，工具会自动清理。</div>
+    <textarea id="txtInput" placeholder="输入ASCII文本，例如：CAGE"></textarea>
+    <div>
+        <button onclick="textToWord()">转换为三菱字格式</button>
+        <button class="gray" onclick="clearAll()">清空所有</button>
+    </div>
+    <div class="opt">
+        <label><input type="radio" name="endian1" value="little" checked> 小端</label>
+        <label><input type="radio" name="endian1" value="big"> 大端</label>
+    </div>
+    <div class="opt">
+        <label><input type="radio" name="mode1" value="word" checked> 字级显示（带D号）</label>
+        <label><input type="radio" name="mode1" value="single"> 单行连续显示</label>
+    </div>
+    <div class="output-header"><span>二进制：</span><button class="copy-btn" onclick="copyToClipboard('binOutput')">📋 复制</button></div>
+    <textarea id="binOutput" readonly></textarea>
+    <div class="output-header"><span>十六进制：</span><button class="copy-btn" onclick="copyToClipboard('hexOutput')">📋 复制</button></div>
+    <textarea id="hexOutput" readonly></textarea>
+    <div class="output-header"><span>十进制：</span><button class="copy-btn" onclick="copyToClipboard('decOutput')">📋 复制</button></div>
+    <textarea id="decOutput" readonly></textarea>
+</div>
+
+<!-- 字格式 → 文本 -->
+<div class="panel">
+    <h3>🟠 三菱字格式 → ASCII文本（D寄存器显示）</h3>
+    <div class="tip">
+        ✅ <strong>仅接受完整的16位字值，各字用空格分隔</strong><br>
+        格式示例：<code>4143 4547</code> （十六进制）<br>
+        <span style="color:#dc3545;">⚠️ 禁止输入单字节值（如 41 43 45 47），必须两个字节组合成一个字！</span><br>
+        <small>💡 支持 0x 前缀，支持 D0: 标记</small>
+    </div>
+    <div class="warning" id="byteWarning" style="display:none;">
+        ⚠️ 检测到所有数值均≤255，疑似输入了单字节序列，请合并为完整的字（如 4143 4547）。
+    </div>
+    <textarea id="codeInput" placeholder="输入字数据，例如：4143 4547"></textarea>
+    <div>
+        <button onclick="wordToText(2)">二进制字 → 文本</button>
+        <button onclick="wordToText(16)">十六进制字 → 文本</button>
+        <button onclick="wordToText(10)">十进制字 → 文本</button>
+    </div>
+    <div class="opt">
+        <label><input type="radio" name="endian2" value="little" checked> 小端</label>
+        <label><input type="radio" name="endian2" value="big"> 大端</label>
+    </div>
+    <div class="opt">
+        <label><input type="radio" name="mode2" value="word" checked> 字级显示（带D号）</label>
+        <label><input type="radio" name="mode2" value="single"> 单行连续显示</label>
+    </div>
+    <div class="output-header"><span>转换结果：</span><button class="copy-btn" onclick="copyToClipboard('textOutput')">📋 复制</button></div>
+    <textarea id="textOutput" readonly></textarea>
+</div>
+
+<script>
+    function isLittleEndian1() {
+        return document.querySelector('input[name="endian1"]:checked').value === 'little';
+    }
+    function isWordMode1() {
+        return document.querySelector('input[name="mode1"]:checked').value === 'word';
+    }
+    function isLittleEndian2() {
+        return document.querySelector('input[name="endian2"]:checked').value === 'little';
+    }
+    function isWordMode2() {
+        return document.querySelector('input[name="mode2"]:checked').value === 'word';
+    }
+
+    function copyToClipboard(elementId) {
+        const textarea = document.getElementById(elementId);
+        if (!textarea.value.trim()) {
+            alert('没有可复制的内容');
+            return;
+        }
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert('已复制到剪贴板');
+        } catch (err) {
+            alert('复制失败，请手动复制');
+        }
+    }
+
+    function textToWord() {
+        let str = document.getElementById('txtInput').value.replace(/\s+/g, '');
+        if (str.length === 0) {
+            alert('请输入 ASCII 文本');
+            return;
+        }
+        const nonAscii = [...str].filter(c => c.charCodeAt(0) > 255);
+        if (nonAscii.length > 0) {
+            alert(`⚠️ 检测到非ASCII字符：${[...new Set(nonAscii)].join(' ')}\n这些字符将被截断，请仅使用基本拉丁字符。`);
+        }
+        let bytes = [...str].map(c => c.charCodeAt(0) & 0xFF);
+        if (bytes.length % 2 !== 0) bytes.push(0);
+
+        let wordsBin = [], wordsHex = [], wordsDec = [];
+        for (let i = 0; i < bytes.length; i += 2) {
+            let b1 = bytes[i], b2 = bytes[i + 1];
+            let lowByte, highByte;
+            if (isLittleEndian1()) { lowByte = b1; highByte = b2; }
+            else { lowByte = b2; highByte = b1; }
+            let word = (highByte << 8) | lowByte;
+            wordsBin.push(word.toString(2).padStart(16, '0'));
+            wordsHex.push(word.toString(16).toUpperCase().padStart(4, '0'));
+            wordsDec.push(word.toString(10));
+        }
+
+        const fmt = isWordMode1() ? (v, i) => `D${i}: ${v}` : v => v;
+        document.getElementById('binOutput').value = wordsBin.map(fmt).join(isWordMode1() ? '\n' : ' ');
+        document.getElementById('hexOutput').value = wordsHex.map(fmt).join(isWordMode1() ? '\n' : ' ');
+        document.getElementById('decOutput').value = wordsDec.map(fmt).join(isWordMode1() ? '\n' : ' ');
+    }
+
+    function wordToText(radix) {
+        let input = document.getElementById('codeInput').value;
+        let cleaned = input.replace(/(D\d+:?)/g, '').trim();
+        const warningEl = document.getElementById('byteWarning');
+        warningEl.style.display = 'none';
+
+        if (cleaned === '') {
+            alert('请输入字数据');
+            return;
+        }
+
+        let parts = cleaned.split(/\s+/);
+        let values = parts.map(p => parseInt(p.replace(/^0x/i, ''), radix));
+        if (values.some(v => isNaN(v))) {
+            alert('输入包含无法识别的数值，请检查');
+            return;
+        }
+
+        // 检测是否全部 <= 255，若是则给出警告，并阻止转换（或提示修正）
+        if (values.every(v => v <= 0xFF)) {
+            warningEl.style.display = 'block';
+            // 不自动转换，要求用户输入正确的字格式
+            document.getElementById('textOutput').value = '';
+            return;
+        }
+
+        let bytes = [];
+        values.forEach(word => {
+            let lowByte = word & 0xFF;
+            let highByte = (word >> 8) & 0xFF;
+            if (isLittleEndian2()) {
+                bytes.push(lowByte, highByte);
+            } else {
+                bytes.push(highByte, lowByte);
+            }
+        });
+
+        let chars = bytes.map(b => String.fromCharCode(b)).filter(c => c !== '\0');
+        let resultStr = chars.join('');
+
+        if (isWordMode2()) {
+            let lines = [];
+            for (let i = 0; i < resultStr.length; i += 2) {
+                let twoChar = resultStr.substr(i, 2).padEnd(2, ' ');
+                lines.push(`D${Math.floor(i / 2)}: ${twoChar}`);
+            }
+            document.getElementById('textOutput').value = lines.join('\n');
+        } else {
+            document.getElementById('textOutput').value = resultStr;
+        }
+    }
+
+    function clearAll() {
+        document.querySelectorAll('textarea').forEach(t => t.value = '');
+        document.getElementById('byteWarning').style.display = 'none';
+    }
+</script>
+</body>
+</html>
