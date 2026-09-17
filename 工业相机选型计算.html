@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工业镜头选型计算器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EEF2F6;
+    --panel: #FFFFFF;
+    --panel-soft: #F7F9FB;
+    --line: #D7DEE6;
+    --line-soft: #E6EBF0;
+    --ink: #17212B;
+    --ink-soft: #55636F;
+    --ink-faint: #8A97A3;
+    --blue: #1D5FA8;
+    --blue-soft: #E7F0FB;
+    --amber: #D96A0C;
+    --amber-soft: #FBEBDA;
+    --danger: #C4432B;
+    --danger-soft: #FBEAE6;
+    --dot: rgba(29,95,168,0.10);
+    --shadow: 0 1px 2px rgba(23,33,43,0.04), 0 8px 24px rgba(23,33,43,0.05);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"]{
+    --bg: #10161D;
+    --panel: #171F27;
+    --panel-soft: #1C2530;
+    --line: #2B3742;
+    --line-soft: #232D37;
+    --ink: #E7ECF1;
+    --ink-soft: #A6B2BD;
+    --ink-faint: #71808C;
+    --blue: #6FA8E8;
+    --blue-soft: #1B2A3B;
+    --amber: #F2934A;
+    --amber-soft: #33260F;
+    --danger: #E8836F;
+    --danger-soft: #3A2019;
+    --dot: rgba(111,168,232,0.10);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #10161D;
+      --panel: #171F27;
+      --panel-soft: #1C2530;
+      --line: #2B3742;
+      --line-soft: #232D37;
+      --ink: #E7ECF1;
+      --ink-soft: #A6B2BD;
+      --ink-faint: #71808C;
+      --blue: #6FA8E8;
+      --blue-soft: #1B2A3B;
+      --amber: #F2934A;
+      --amber-soft: #33260F;
+      --danger: #E8836F;
+      --danger-soft: #3A2019;
+      --dot: rgba(111,168,232,0.10);
+      color-scheme: dark;
+    }
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(var(--dot) 1px, transparent 1px) 0 0/22px 22px,
+      var(--bg);
+    color: var(--ink);
+    font-family: "Space Grotesk", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.55;
+    padding: 28px 20px 64px;
+  }
+  .mono{ font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; }
+
+  .wrap{ max-width: 1180px; margin: 0 auto; }
+
+  header.top{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  header.top .crumb{
+    font-size: 13px; color: var(--ink-faint); margin-bottom: 6px;
+  }
+  header.top h1{
+    font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.01em;
+  }
+  header.top .tag{
+    font-size: 13px; color: var(--ink-soft); max-width: 460px;
+  }
+  header.top .badge{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size: 12.5px; color: var(--blue);
+    background: var(--blue-soft);
+    border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 3px;
+    font-family: "IBM Plex Mono", monospace;
+    white-space: nowrap;
+  }
+  header.top .badge::before{
+    content:""; width:6px; height:6px; background: var(--blue); border-radius:50%;
+    box-shadow: 0 0 0 3px var(--blue-soft);
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 880px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+  }
+
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .panel-head h2{
+    font-size: 14px; margin:0; font-weight:600; letter-spacing: .01em;
+  }
+  .panel-body{ padding: 18px; }
+
+  .reset-btn{
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    background: var(--panel-soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .reset-btn:hover{ border-color: var(--blue); color: var(--blue); }
+
+  fieldset{ border: none; padding: 0; margin: 0 0 20px; }
+  fieldset:last-child{ margin-bottom: 0; }
+  legend{
+    font-size: 12px; font-weight:600; color: var(--ink-faint);
+    text-transform: none; letter-spacing: .02em;
+    padding: 0 0 10px; width:100%;
+    border-bottom: 1px dashed var(--line);
+    margin-bottom: 12px;
+  }
+
+  .field{ margin-bottom: 12px; }
+  .field:last-child{ margin-bottom: 0; }
+  .field label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size: 12.5px; color: var(--ink-soft); margin-bottom: 5px;
+  }
+  .field label .unit{ color: var(--ink-faint); font-size: 11.5px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+
+  input[type="number"], select{
+    width: 100%;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14.5px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--panel);
+    color: var(--ink);
+  }
+  input[type="number"]:focus, select:focus{
+    outline: none; border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-soft);
+  }
+  input[readonly]{
+    background: var(--panel-soft); color: var(--ink-soft);
+  }
+  select{ cursor: pointer; }
+
+  .preset-note{
+    display:none;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    background: var(--panel-soft);
+    border: 1px dashed var(--line);
+    border-radius: 3px;
+    padding: 6px 9px;
+    margin-top: 6px;
+  }
+
+  .mode-toggle{
+    display:flex;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .mode-btn{
+    flex: 1;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.3;
+    padding: 8px 6px;
+    background: var(--panel-soft);
+    color: var(--ink-soft);
+    border: none;
+    border-right: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .mode-btn:last-child{ border-right: none; }
+  .mode-btn.active{
+    background: var(--blue-soft);
+    color: var(--blue);
+    font-weight: 600;
+  }
+
+  .diagram-wrap{
+    background: var(--panel-soft);
+    border-bottom: 1px solid var(--line-soft);
+    padding: 10px 6px 4px;
+  }
+  svg{ width: 100%; height: auto; display:block; }
+  .svg-ink{ fill: var(--ink); }
+  .svg-line{ stroke: var(--ink-faint); }
+  .svg-blue{ stroke: var(--blue); fill: var(--blue); }
+  .svg-blue-fill{ fill: var(--blue-soft); }
+  .svg-amber{ stroke: var(--amber); fill: var(--amber); }
+
+  .results{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 18px;
+  }
+  @media (max-width: 640px){
+    .results{ grid-template-columns: repeat(2, 1fr); }
+  }
+  .rcard{
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 12px 14px;
+    background: var(--panel);
+  }
+  .rcard.hero{
+    background: var(--amber-soft);
+    border-color: var(--amber);
+  }
+  .rcard .rlabel{
+    font-size: 11.5px; color: var(--ink-faint); margin-bottom: 6px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .rcard .rvalue{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 21px; font-weight: 600; color: var(--ink);
+  }
+  .rcard.hero .rvalue{ color: var(--amber); }
+  .rcard .rvalue .runit{ font-size: 13px; color: var(--ink-faint); font-weight: 400; margin-left: 3px; }
+  .rcard .rsub{ font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+
+  .notice{
+    margin: 0 18px 18px;
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-size: 12.5px;
+    display: none;
+    border: 1px solid var(--danger);
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+  .notice.show{ display:block; }
+
+  .formulas{
+    margin-top: 20px;
+  }
+  .formulas h2{
+    font-size: 15px; margin: 0 0 4px;
+  }
+  .formulas > p.lede{
+    font-size: 13px; color: var(--ink-soft); margin: 0 0 16px; max-width: 640px;
+  }
+  .fgrid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 880px){
+    .fgrid{ grid-template-columns: 1fr; }
+  }
+  .fcard{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .fcard .fnum{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--blue);
+    border: 1px solid var(--line);
+    background: var(--blue-soft);
+    display:inline-block; padding: 2px 7px; border-radius: 3px;
+    margin-bottom: 10px;
+  }
+  .fcard h3{ font-size: 14.5px; margin: 0 0 8px; }
+  .fcard .eq{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 15px;
+    background: var(--panel-soft);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 10px 12px;
+    margin: 0 0 10px;
+    overflow-x: auto;
+  }
+  .fcard p{ font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+  .fcard sub{ font-size: 70%; }
+
+  footer.foot{
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--ink-faint);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="crumb">机器视觉 / 光学选型</div>
+      <h1>工业镜头选型计算器</h1>
+      <div class="tag">输入相机传感器参数与目标工作条件，自动估算所需焦距、视场角与成像精度。</div>
+    </div>
+    <div class="badge">近轴近似 &middot; WD ≫ f</div>
+  </header>
+
+  <div class="grid">
+
+    <!-- INPUT PANEL -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>输入参数</h2>
+        <button class="reset-btn" id="resetBtn" type="button">恢复示例值</button>
+      </div>
+      <div class="panel-body">
+
+        <fieldset>
+          <legend>1&nbsp;&nbsp;相机 / 传感器</legend>
+
+          <div class="field">
+            <label for="presetSel">传感器预设 <span class="unit">可选，自动填充下方参数</span></label>
+            <select id="presetSel">
+              <option value="custom">自定义</option>
+              <optgroup label="通用 Sony 传感器">
+                <option data-h="2448" data-v="2048" data-p="3.45" data-note="常见于多家品牌的 500 万像素全局快门相机">Sony IMX264/265 · 500万 · 3.45µm</option>
+                <option data-h="2448" data-v="2048" data-p="3.45" data-note="常见于多家品牌的 500 万像素全局快门相机">Sony IMX250 · 500万 · 3.45µm</option>
+                <option data-h="2464" data-v="2056" data-p="3.45" data-note="常见于多家品牌的 500 万像素全局快门相机">Sony IMX267 · 500万 · 3.45µm</option>
+                <option data-h="4096" data-v="3000" data-p="3.45" data-note="常见于多家品牌的 1230 万像素全局快门相机">Sony IMX304 · 1230万 · 3.45µm</option>
+                <option data-h="3072" data-v="2048" data-p="2.40" data-note="常见于多家品牌的 600 万像素全局快门相机">Sony IMX178 · 600万 · 2.4µm</option>
+                <option data-h="1920" data-v="1200" data-p="3.00" data-note="常见于多家品牌的 230 万像素全局快门相机">Sony IMX392 · 230万 · 3.0µm</option>
+              </optgroup>
+              <optgroup label="海康机器人 HIKROBOT（常用型号，非全型号）">
+                <option data-h="1440" data-v="1080" data-p="3.45" data-note="IMX296，1/2.9″，全局快门">MV-CS016-10GM/GC · 约160万像素</option>
+                <option data-h="2448" data-v="2048" data-p="3.45" data-note="IMX264，2/3″，全局快门">MV-CS050-10GM/GC · 500万像素</option>
+                <option data-h="3072" data-v="2048" data-p="2.40" data-note="IMX178，1/1.8″，全局快门">MV-CS060-10GM/GC · 600万像素</option>
+                <option data-h="5472" data-v="3648" data-p="2.40" data-note="IMX183，1″，卷帘快门">MV-CS200-10GM/GC · 2000万像素</option>
+                <option data-h="1440" data-v="1080" data-p="3.45" data-note="IMX273，1/2.9″，全局快门">MV-CA013-A0GM/GC · 约130万像素</option>
+                <option data-h="1920" data-v="1200" data-p="3.00" data-note="IMX392，1/2.9″，全局快门">MV-CA023-10GM/GC · 约230万像素</option>
+                <option data-h="2592" data-v="2048" data-p="4.80" data-note="onsemi PYTHON5000，1″，全局快门">MV-CA050-20UM · 500万像素</option>
+                <option data-h="4096" data-v="2460" data-p="3.45" data-note="堆栈式 BSI 背照传感器，1″，全局快门">MV-CH100-60GM/GC · 1000万像素</option>
+              </optgroup>
+              <optgroup label="基恩士 KEYENCE（按官方公布像素数估算，非全型号）">
+                <option data-h="640" data-v="480" data-p="" data-note="基恩士未公开像元尺寸，仅供参考，请以型号规格书为准">CV-X/XG-X 标准相机 · 约30万像素</option>
+                <option data-h="1600" data-v="1200" data-p="" data-note="基恩士未公开像元尺寸，仅供参考，请以型号规格书为准">CV-X/XG-X CA-D 系列 · 约200万像素</option>
+                <option data-h="2448" data-v="2048" data-p="" data-note="基恩士未公开像元尺寸，仅供参考，请以型号规格书为准">CV-X/XG-X CA-D 系列 · 约500万像素</option>
+                <option data-h="4096" data-v="3000" data-p="" data-note="基恩士未公开像元尺寸，仅供参考，请以型号规格书为准">CV-X/XG-X CA-U 系列 · 约1200万像素</option>
+                <option data-h="5292" data-v="3969" data-p="" data-note="CA-HF 高分辨率型，基恩士未公开像元尺寸，仅供参考">CV-X/XG-X CA-HF 系列 · 约2100万像素</option>
+                <option data-h="9238" data-v="6928" data-p="" data-note="CA-HF 高分辨率型，基恩士未公开像元尺寸，仅供参考">CV-X/XG-X CA-HF 系列 · 约6400万像素</option>
+              </optgroup>
+            </select>
+            <div class="preset-note" id="presetNote"></div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="resH">水平分辨率 <span class="unit">px</span></label>
+              <input type="number" id="resH" value="2448" min="1" step="1">
+            </div>
+            <div class="field">
+              <label for="resV">垂直分辨率 <span class="unit">px</span></label>
+              <input type="number" id="resV" value="2048" min="1" step="1">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="pixelUm">像元尺寸 <span class="unit">µm</span></label>
+            <input type="number" id="pixelUm" value="3.45" min="0.1" step="0.01">
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>传感器宽度 <span class="unit">mm，自动计算</span></label>
+              <input type="text" id="sensorW" readonly>
+            </div>
+            <div class="field">
+              <label>传感器高度 <span class="unit">mm，自动计算</span></label>
+              <input type="text" id="sensorH" readonly>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>2&nbsp;&nbsp;目标与工作距离</legend>
+
+          <div class="field">
+            <label>计算方向</label>
+            <div class="mode-toggle" id="modeToggle">
+              <button type="button" class="mode-btn active" data-mode="forward">已知目标尺寸 → 求焦距</button>
+              <button type="button" class="mode-btn" data-mode="reverse">已知焦距 → 反算视场</button>
+            </div>
+          </div>
+
+          <div id="modeForwardFields">
+            <div class="field-row">
+              <div class="field">
+                <label for="targetW">目标宽度 <span class="unit">mm</span></label>
+                <input type="number" id="targetW" value="100" min="0.1" step="0.1">
+              </div>
+              <div class="field">
+                <label for="targetH">目标高度 <span class="unit">mm</span></label>
+                <input type="number" id="targetH" value="84" min="0.1" step="0.1">
+              </div>
+            </div>
+          </div>
+
+          <div id="modeReverseFields" style="display:none">
+            <div class="field">
+              <label for="focalLen">镜头焦距 f <span class="unit">mm，已选定的镜头规格</span></label>
+              <input type="number" id="focalLen" value="100" min="0.1" step="0.1">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="wd">工作距离 WD <span class="unit">mm，镜头前端到目标</span></label>
+            <input type="number" id="wd" value="1170" min="1" step="1">
+          </div>
+        </fieldset>
+
+      </div>
+    </div>
+
+    <!-- OUTPUT PANEL -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>光路示意 &amp; 计算结果</h2>
+      </div>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">
+          <!-- optical axis -->
+          <line x1="150" y1="230" x2="740" y2="230" class="svg-line" stroke-width="1" stroke-dasharray="4 4"/>
+
+          <!-- camera body -->
+          <rect x="40" y="196" width="90" height="68" rx="3" class="svg-ink" opacity="0.85"/>
+          <rect x="10" y="222" width="30" height="16" rx="2" class="svg-ink" opacity="0.6"/>
+          <text x="85" y="285" text-anchor="middle" class="svg-ink" font-size="13" font-family="Space Grotesk, sans-serif">相机</text>
+
+          <!-- lens -->
+          <rect x="130" y="206" width="46" height="48" rx="4" class="svg-ink" opacity="0.95"/>
+          <circle cx="176" cy="230" r="22" fill="none" class="svg-line" stroke-width="2"/>
+          <circle cx="176" cy="230" r="13" fill="none" class="svg-line" stroke-width="1.5"/>
+          <text x="153" y="285" text-anchor="middle" class="svg-ink" font-size="13" font-family="Space Grotesk, sans-serif">镜头</text>
+
+          <!-- FOV rays -->
+          <polygon points="176,230 700,90 700,370" fill="var(--blue)" class="svg-blue-fill" opacity="0.10"/>
+          <line x1="176" y1="230" x2="700" y2="90" class="svg-amber" stroke-width="1.4"/>
+          <line x1="176" y1="230" x2="700" y2="370" class="svg-amber" stroke-width="1.4"/>
+
+          <!-- target plane -->
+          <line x1="700" y1="90" x2="700" y2="370" class="svg-blue" stroke-width="3"/>
+          <text x="700" y="392" text-anchor="middle" class="svg-ink" font-size="13" font-family="Space Grotesk, sans-serif">目标平面</text>
+
+          <!-- angle arc + label -->
+          <path d="M 216 230 A 40 40 0 0 0 205 199" fill="none" class="svg-amber" stroke-width="1.4"/>
+          <text id="fovLbl" x="228" y="185" class="svg-amber" font-size="13" font-family="IBM Plex Mono, monospace">4.9°</text>
+
+          <!-- WD dimension -->
+          <line x1="176" y1="330" x2="700" y2="330" class="svg-line" stroke-width="1"/>
+          <line x1="176" y1="322" x2="176" y2="338" class="svg-line" stroke-width="1"/>
+          <line x1="700" y1="322" x2="700" y2="338" class="svg-line" stroke-width="1"/>
+          <text id="wdLbl" x="438" y="350" text-anchor="middle" class="svg-ink" font-size="13" font-family="IBM Plex Mono, monospace">WD = 1170 mm</text>
+
+          <!-- target width dimension (top) -->
+          <line x1="700" y1="70" x2="800" y2="70" class="svg-line" stroke-width="1" stroke-dasharray="3 3"/>
+          <text id="twLbl" x="800" y="65" text-anchor="start" class="svg-blue" font-size="13" font-family="IBM Plex Mono, monospace">W = 100 mm</text>
+
+          <!-- target height dimension (right) -->
+          <line x1="820" y1="90" x2="820" y2="370" class="svg-line" stroke-width="1" stroke-dasharray="3 3"/>
+          <text id="thLbl" x="828" y="234" text-anchor="start" class="svg-blue" font-size="13" font-family="IBM Plex Mono, monospace" transform="rotate(90 828 234)">H = 84 mm</text>
+
+          <!-- focal length label -->
+          <text id="fLbl" x="153" y="200" text-anchor="middle" class="svg-amber" font-size="13" font-family="IBM Plex Mono, monospace" font-weight="600">f = 98.8 mm</text>
+        </svg>
+      </div>
+
+      <div class="notice" id="warnBox"></div>
+
+      <div class="results">
+        <div class="rcard hero">
+          <div class="rlabel" id="heroLabel">焦距 f</div>
+          <div class="rvalue"><span id="outF">--</span><span class="runit" id="heroUnit">mm</span></div>
+          <div class="rsub" id="outFSub">按目标宽度估算</div>
+        </div>
+        <div class="rcard">
+          <div class="rlabel">放大倍率 β</div>
+          <div class="rvalue"><span id="outBeta">--</span></div>
+          <div class="rsub">传感器尺寸 / 目标尺寸</div>
+        </div>
+        <div class="rcard">
+          <div class="rlabel">水平视场角</div>
+          <div class="rvalue"><span id="outFovH">--</span><span class="runit">°</span></div>
+          <div class="rsub">FOV<sub>H</sub></div>
+        </div>
+        <div class="rcard">
+          <div class="rlabel">垂直视场角</div>
+          <div class="rvalue"><span id="outFovV">--</span><span class="runit">°</span></div>
+          <div class="rsub">FOV<sub>V</sub></div>
+        </div>
+        <div class="rcard">
+          <div class="rlabel">单像素精度（水平）</div>
+          <div class="rvalue"><span id="outResX">--</span><span class="runit">mm/px</span></div>
+          <div class="rsub" id="outResXsub">--</div>
+        </div>
+        <div class="rcard">
+          <div class="rlabel">单像素精度（垂直）</div>
+          <div class="rvalue"><span id="outResY">--</span><span class="runit">mm/px</span></div>
+          <div class="rsub" id="outResYsub">--</div>
+        </div>
+        <div class="rcard">
+          <div class="rlabel">传感器尺寸</div>
+          <div class="rvalue" style="font-size:16px"><span id="outSensor">--</span></div>
+          <div class="rsub">宽 × 高，mm</div>
+        </div>
+        <div class="rcard">
+          <div class="rlabel">对角线视场角</div>
+          <div class="rvalue"><span id="outFovD">--</span><span class="runit">°</span></div>
+          <div class="rsub">FOV<sub>D</sub></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FORMULAS -->
+  <div class="formulas">
+    <h2>计算公式说明</h2>
+    <p class="lede">STEP 1–5 是"已知目标尺寸求焦距"（模式一）的计算顺序；"反算"卡片是"已知焦距求视场"（模式二）的逆运算，两者共用同一套相似三角形近似。整套算法适用于工作距离远大于焦距（WD ≫ f）的常规机器视觉场景；WD 与 f 接近时（微距/显微场景）误差会明显增大，建议改用镜头厂商的精确选型表或联系镜头供应商核算。</p>
+
+    <div class="fgrid">
+      <div class="fcard">
+        <span class="fnum">STEP 1</span>
+        <h3>传感器物理尺寸</h3>
+        <div class="eq">S<sub>w</sub> = N<sub>h</sub> × p<br>S<sub>h</sub> = N<sub>v</sub> × p</div>
+        <p>N<sub>h</sub>、N<sub>v</sub> 为水平 / 垂直方向像素数，p 为像元尺寸。用像素数乘以单个像元的物理边长，得到感光芯片的实际宽度与高度（单位换算为 mm）。</p>
+      </div>
+
+      <div class="fcard">
+        <span class="fnum">STEP 2</span>
+        <h3>放大倍率</h3>
+        <div class="eq">β = S<sub>w</sub> / W</div>
+        <p>放大倍率是成像的核心比例：传感器上的像有多大，除以目标实物有多大。分辨率不变时，β 越大代表看得越"近"、单像素代表的实际尺寸越小，精度越高。</p>
+      </div>
+
+      <div class="fcard">
+        <span class="fnum">STEP 3</span>
+        <h3>焦距（近轴近似）</h3>
+        <div class="eq">f ≈ WD × β</div>
+        <p>由相似三角形关系 β ≈ f / WD 推导（严格公式为 β = f /（WD − f），当 WD ≫ f 时分母中的 f 可忽略）。工作距离越远、需要的放大倍率越小，则焦距越短。</p>
+      </div>
+
+      <div class="fcard">
+        <span class="fnum">STEP 4</span>
+        <h3>视场角</h3>
+        <div class="eq">FOV = 2 × arctan( (D/2) / WD )</div>
+        <p>视场角由目标尺寸 D（宽或高）与工作距离直接构成的直角三角形几何关系决定，与镜头焦距无关——它描述的是"看见这么大范围需要多大的张角"，反过来再用于挑选合适焦距的镜头。</p>
+      </div>
+
+      <div class="fcard">
+        <span class="fnum">STEP 5</span>
+        <h3>单像素精度</h3>
+        <div class="eq">R = W / N<sub>h</sub>&nbsp;&nbsp;(或 H / N<sub>v</sub>)</div>
+        <p>把目标视野的物理尺寸平均分给每一个像素，得到"一个像素对应多少毫米"的空间分辨率，是判断检测精度是否满足要求的关键指标——数值越小，可分辨的细节越精细。</p>
+      </div>
+
+      <div class="fcard">
+        <span class="fnum">反算</span>
+        <h3>已知焦距反推视场（模式二）</h3>
+        <div class="eq">FOV = 2 × arctan( S / (2f) )<br>D<sub>目标</sub> = WD × S / f</div>
+        <p>如果镜头焦距 f 已经选定（比如现有库存镜头），先用传感器尺寸 S 和 f 算出镜头本身的视场角，再结合工作距离反推在该距离上实际能拍到多大的范围——这是选型的逆过程，常用于核对"手头这颗镜头够不够用"。</p>
+      </div>
+
+      <div class="fcard">
+        <span class="fnum">补充</span>
+        <h3>宽高比校验</h3>
+        <div class="eq">β<sub>w</sub> = S<sub>w</sub>/W&nbsp;&nbsp;vs&nbsp;&nbsp;β<sub>h</sub> = S<sub>h</sub>/H</div>
+        <p>若目标宽高比与传感器宽高比不一致，两个方向算出的焦距会略有差异。为确保目标完整落入视野，应取二者中使视场更宽的（即较小的）焦距，多余方向会有富余视野。</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    近似计算仅供选型参考，实际镜头需结合畸变、像面照度、工作 F 数与厂商 MTF 曲线综合确认。
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  const resH = $('resH'), resV = $('resV'), pixelUm = $('pixelUm');
+  const targetW = $('targetW'), targetH = $('targetH'), wd = $('wd'), focalLen = $('focalLen');
+  const presetSel = $('presetSel');
+  const modeBtns = document.querySelectorAll('.mode-btn');
+
+  const DEFAULTS = { resH: 2448, resV: 2048, pixelUm: 3.45, targetW: 100, targetH: 84, wd: 1170, focalLen: 98.8 };
+
+  let mode = 'forward'; // 'forward' = 已知目标尺寸求焦距, 'reverse' = 已知焦距反算视场
+
+  function fmt(n, d){
+    if (!isFinite(n)) return '--';
+    return n.toFixed(d);
+  }
+
+  function setMode(next){
+    mode = next;
+    modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    $('modeForwardFields').style.display = (mode === 'forward') ? '' : 'none';
+    $('modeReverseFields').style.display = (mode === 'reverse') ? '' : 'none';
+    calc();
+  }
+
+  function calc(){
+    const Nh = parseFloat(resH.value) || 0;
+    const Nv = parseFloat(resV.value) || 0;
+    const p  = parseFloat(pixelUm.value) || 0; // µm
+    const D  = parseFloat(wd.value) || 0;      // mm
+
+    const Sw = Nh * p / 1000; // mm
+    const Sh = Nv * p / 1000; // mm
+
+    $('sensorW').value = Sw ? fmt(Sw,4) : '--';
+    $('sensorH').value = Sh ? fmt(Sh,4) : '--';
+    $('outSensor').textContent = (Sw && Sh) ? (fmt(Sw,3)+' × '+fmt(Sh,3)) : '--';
+
+    const warnBox = $('warnBox');
+    let msgs = [];
+
+    let W, H, fPrimary, betaPrimary, fovH, fovV;
+
+    if (mode === 'forward'){
+      W = parseFloat(targetW.value) || 0;
+      H = parseFloat(targetH.value) || 0;
+
+      const betaW = (Sw && W) ? Sw / W : NaN;
+      const betaH = (Sh && H) ? Sh / H : NaN;
+      const fW = (D && isFinite(betaW)) ? D * betaW : NaN;
+      const fH = (D && isFinite(betaH)) ? D * betaH : NaN;
+
+      // choose the smaller focal length (wider FOV) to guarantee full coverage
+      fPrimary = fW; betaPrimary = betaW; let primaryDim = '宽度';
+      if (isFinite(fH) && (!isFinite(fW) || fH < fW)){
+        fPrimary = fH; betaPrimary = betaH; primaryDim = '高度';
+      }
+
+      fovH = (D && W) ? 2 * Math.atan((W/2)/D) * 180/Math.PI : NaN;
+      fovV = (D && H) ? 2 * Math.atan((H/2)/D) * 180/Math.PI : NaN;
+
+      $('heroLabel').textContent = '焦距 f';
+      $('heroUnit').textContent = 'mm';
+      $('outF').textContent = isFinite(fPrimary) ? fmt(fPrimary,1) : '--';
+      $('outFSub').textContent = '按目标' + primaryDim + '估算，取较小值以保证视野完整覆盖';
+
+      if (isFinite(betaW) && isFinite(betaH) && Math.abs(betaW - betaH) / Math.max(betaW,betaH) > 0.05){
+        msgs.push('目标宽高比与传感器宽高比不一致（水平放大倍率 ' + fmt(betaW,4) + ' vs 垂直放大倍率 ' + fmt(betaH,4) + '），已取较小焦距以保证视野完整覆盖，另一方向会有富余视野。');
+      }
+
+    } else {
+      const f = parseFloat(focalLen.value) || 0;
+      fPrimary = f;
+
+      fovH = (Sw && f) ? 2 * Math.atan(Sw/(2*f)) * 180/Math.PI : NaN;
+      fovV = (Sh && f) ? 2 * Math.atan(Sh/(2*f)) * 180/Math.PI : NaN;
+
+      W = (D && Sw && f) ? D * Sw / f : NaN;
+      H = (D && Sh && f) ? D * Sh / f : NaN;
+      betaPrimary = (f && D) ? f / D : NaN;
+
+      $('heroLabel').textContent = '视野尺寸 (W × H)';
+      $('heroUnit').textContent = 'mm';
+      $('outF').textContent = (isFinite(W) && isFinite(H)) ? (fmt(W,1) + ' × ' + fmt(H,1)) : '--';
+      $('outFSub').textContent = '由已知焦距与工作距离反算得到的目标覆盖范围';
+    }
+
+    $('outBeta').textContent = isFinite(betaPrimary) ? fmt(betaPrimary,6) : '--';
+    $('outFovH').textContent = isFinite(fovH) ? fmt(fovH,2) : '--';
+    $('outFovV').textContent = isFinite(fovV) ? fmt(fovV,2) : '--';
+
+    const diagTarget = (W && H) ? Math.sqrt(W*W + H*H) : NaN;
+    const fovD = (D && isFinite(diagTarget)) ? 2 * Math.atan((diagTarget/2)/D) * 180/Math.PI : NaN;
+    $('outFovD').textContent = isFinite(fovD) ? fmt(fovD,2) : '--';
+
+    const resX = (W && Nh) ? W / Nh : NaN;
+    const resY = (H && Nv) ? H / Nv : NaN;
+    $('outResX').textContent = isFinite(resX) ? fmt(resX,4) : '--';
+    $('outResY').textContent = isFinite(resY) ? fmt(resY,4) : '--';
+    $('outResXsub').textContent = isFinite(resX) ? ('≈ ' + fmt(resX*1000,1) + ' µm/px') : '--';
+    $('outResYsub').textContent = isFinite(resY) ? ('≈ ' + fmt(resY*1000,1) + ' µm/px') : '--';
+
+    if (isFinite(fPrimary) && D && (fPrimary / D) > 0.2){
+      msgs.push('焦距与工作距离比值较大（f/WD ≈ ' + fmt(fPrimary/D,2) + '），已超出常规近轴近似的适用范围，建议按微距/显微镜头选型方式复核。');
+    }
+    if (msgs.length){
+      warnBox.innerHTML = msgs.join('<br>');
+      warnBox.classList.add('show');
+    } else {
+      warnBox.classList.remove('show');
+    }
+
+    // update diagram labels
+    $('fLbl').textContent = isFinite(fPrimary) ? ('f = ' + fmt(fPrimary,1) + ' mm') : 'f = -- mm';
+    $('wdLbl').textContent = 'WD = ' + (D || '--') + ' mm';
+    $('twLbl').textContent = 'W = ' + (isFinite(W) ? fmt(W,1) : '--') + ' mm';
+    $('thLbl').textContent = 'H = ' + (isFinite(H) ? fmt(H,1) : '--') + ' mm';
+    $('fovLbl').textContent = isFinite(fovH) ? (fmt(fovH,1) + '°') : '--°';
+  }
+
+  [resH, resV, pixelUm, targetW, targetH, wd, focalLen].forEach(el => {
+    el.addEventListener('input', calc);
+  });
+
+  modeBtns.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+
+  presetSel.addEventListener('change', () => {
+    const opt = presetSel.selectedOptions[0];
+    const note = $('presetNote');
+    if (opt && opt.value !== 'custom'){
+      resH.value = opt.dataset.h;
+      resV.value = opt.dataset.v;
+      if (opt.dataset.p){ pixelUm.value = opt.dataset.p; }
+      if (opt.dataset.note){
+        note.textContent = opt.dataset.note;
+        note.style.display = 'block';
+      } else {
+        note.style.display = 'none';
+      }
+      calc();
+    } else {
+      note.style.display = 'none';
+    }
+  });
+
+  $('resetBtn').addEventListener('click', () => {
+    resH.value = DEFAULTS.resH;
+    resV.value = DEFAULTS.resV;
+    pixelUm.value = DEFAULTS.pixelUm;
+    targetW.value = DEFAULTS.targetW;
+    targetH.value = DEFAULTS.targetH;
+    wd.value = DEFAULTS.wd;
+    focalLen.value = DEFAULTS.focalLen;
+    presetSel.value = 'custom';
+    $('presetNote').style.display = 'none';
+    setMode('forward');
+  });
+
+  calc();
+})();
+</script>
+</body>
+</html>
